@@ -67,10 +67,12 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 		}
 	}
 
+	log.Infof("Dialing %s %s", network, address)
 	conn, err := d.Dialer.DialContext(ctx, network, address)
 	if err != nil {
-		return nil, fmt.Errorf("dial: %w", err)
+		return nil, fmt.Errorf("d.Dialer.DialContext failed: %w", err)
 	}
+	log.Debug("d.Dialer.DialContext succeeded")
 
 	// Wrap the connection in Conn to handle Close with hooks
 	return &Conn{Conn: conn, ID: connID}, nil

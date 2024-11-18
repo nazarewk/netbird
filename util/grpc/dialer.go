@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"os/user"
 	"runtime"
@@ -20,24 +21,27 @@ import (
 
 func WithCustomDialer() grpc.DialOption {
 	return grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+		log.Infof("Custom dialer called for address: %s", addr)
 		if runtime.GOOS == "linux" {
 			currentUser, err := user.Current()
 			if err != nil {
-				log.Fatalf("failed to get current user: %v", err)
+				return nil, fmt.Errorf("failed to get current user: %w", err)
 			}
 
-			// the custom dialer requires root permissions which are not required for use cases run as non-root
+			log.Infof("Current user UID: %s", currentUser.Uid)
 			if currentUser.Uid != "0" {
+				log.Debug("Not running as root, using standard dialer")
 				dialer := &net.Dialer{}
 				return dialer.DialContext(ctx, "tcp", addr)
 			}
 		}
 
+		log.Debug("Using nbnet.NewDialer()")
 		conn, err := nbnet.NewDialer().DialContext(ctx, "tcp", addr)
 		if err != nil {
-			log.Errorf("Failed to dial: %s", err)
-			return nil, err
+			return nil, fmt.Errorf("nbnet.NewDialer().DialContext failed: %v", err)
 		}
+		log.Debug("nbnet.NewDialer().DialContext succeeded")
 		return conn, nil
 	})
 }
