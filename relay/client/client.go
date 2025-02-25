@@ -211,7 +211,7 @@ func (c *Client) OpenConn(dstPeerID string) (net.Conn, error) {
 		return nil, ErrConnAlreadyExists
 	}
 
-	c.log.Infof("open connection to peer: %s", hashedStringID)
+	c.log.WithField("peer", dstPeerID).WithField("hashedPeer", hashedStringID).Infof("open connection to peer")
 	msgChannel := make(chan Msg, 100)
 	conn := NewConn(c, hashedID, hashedStringID, msgChannel, c.instanceURL)
 
